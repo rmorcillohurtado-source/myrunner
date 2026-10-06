@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyRunner — Prototipo</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f5f7;color:#111827}
+.app{max-width:430px;margin:auto;min-height:100vh;background:white;box-shadow:0 0 30px #00000012}
+header{padding:18px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:5}
+.logo{font-size:22px;font-weight:800}.logo span{font-weight:400}
+main{padding:24px 20px 100px}.screen{display:none}.screen.active{display:block}
+h1{font-size:30px;line-height:1.1;margin:10px 0}.subtitle{color:#6b7280;line-height:1.5}
+.progress{height:6px;background:#e5e7eb;border-radius:99px;margin:15px 0 25px;overflow:hidden}.bar{height:100%;width:0;background:#111827;transition:.25s}
+label{display:block;font-weight:650;margin:18px 0 8px} input,select{width:100%;padding:13px 14px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;background:white}
+.options{display:grid;gap:10px}.option{border:1px solid #d1d5db;padding:14px;border-radius:12px;cursor:pointer;transition:.15s}.option.selected{border:2px solid #111827;background:#f3f4f6}
+.option input{display:none}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.days .option{padding:11px 0;text-align:center}
+.btn{width:100%;border:0;border-radius:13px;padding:15px;font-size:16px;font-weight:750;cursor:pointer;background:#111827;color:#fff;margin-top:20px}.btn.secondary{background:#e5e7eb;color:#111827}.btn:disabled{opacity:.45;cursor:not-allowed}
+.nav{display:flex;gap:10px}.nav .btn{flex:1}.error{color:#b91c1c;background:#fef2f2;padding:10px;border-radius:10px;margin-top:12px;display:none}
+.card{border:1px solid #e5e7eb;border-radius:16px;padding:16px;margin:12px 0}.hero{background:#111827;color:white;border-radius:18px;padding:20px}.hero small{opacity:.7}.tag{display:inline-block;padding:6px 9px;border-radius:99px;background:#eee;font-size:12px;margin:3px}.check{font-size:22px}
+.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);max-width:430px;width:100%;background:#fff;border-top:1px solid #eee;display:none;justify-content:space-around;padding:10px 4px}.tabs button{border:0;background:none;font-size:12px;color:#6b7280}.tabs button.active{color:#111827;font-weight:700}
+.muted{color:#6b7280}.big{font-size:34px;font-weight:800}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="logo">My<span>Runner</span></div><div id="stepText" class="muted"></div></header>
+<main>
+<section id="intro" class="screen active">
+  <div style="font-size:58px;margin-top:35px">🏃</div>
+  <h1>Tu entrenamiento.<br>Tu ritmo. Cada día.</h1>
+  <p class="subtitle">MyRunner combina un motor de entrenamiento deportivo con IA para adaptar tu plan diariamente.</p>
+  <div class="card"><b>Antes de empezar</b><p class="muted">Para crear un plan personalizado tendrás que completar todo el cuestionario inicial.</p></div>
+  <button class="btn" onclick="start()">Comenzar cuestionario</button>
+</section>
+
+<section id="quiz" class="screen">
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="question"></div>
+  <div class="error" id="error">Completa este apartado para continuar.</div>
+  <div class="nav"><button class="btn secondary" id="back" onclick="prev()">Atrás</button><button class="btn" id="next" onclick="next()">Continuar</button></div>
+</section>
+
+<section id="generating" class="screen">
+  <div style="text-align:center;padding-top:90px">
+    <div style="font-size:60px">🧠</div><h1>Creando tu plan</h1>
+    <p class="subtitle">MyRunner está analizando tus respuestas y calculando tu carga inicial.</p>
+    <div class="card" id="loadingText">Analizando nivel…</div>
+  </div>
+</section>
+
+<section id="home" class="screen">
+  <p class="muted">HOY</p><h1>Tu entrenamiento</h1>
+  <div class="hero"><small>ENTRENAMIENTO 1</small><h2 id="planTitle">Rodaje suave</h2><p id="planDesc">Carrera cómoda, manteniendo un esfuerzo en el que puedas hablar.</p><div class="row"><b id="planDist">5 km</b><span>🟢 Fácil</span></div></div>
+  <div class="card"><div class="row"><b>🤖 Coach IA</b><span class="tag">ACTIVO</span></div><p>Tu plan se actualizará cada día según tus entrenamientos, sensaciones y recuperación.</p></div>
+  <div class="card"><b>Esta semana</b><p class="muted">0 / 3 entrenamientos completados</p><div class="progress"><div class="bar" style="width:0"></div></div></div>
+</section>
+
+<section id="plan" class="screen">
+<h1>Plan</h1><p class="subtitle">Primera semana</p>
+<div class="card"><b>Lunes</b><p>Descanso</p></div>
+<div class="card"><b>Martes · 🟢 Suave</b><p>5 km a ritmo cómodo</p></div>
+<div class="card"><b>Jueves · 🟠 Calidad</b><p>Calentamiento + 5 × 400 m + enfriamiento</p></div>
+<div class="card"><b>Domingo · 🔵 Tirada larga</b><p>8 km suaves</p></div>
+</section>
+
+<section id="coach" class="screen">
+<h1>Coach IA</h1><p class="subtitle">Habla con tu entrenador.</p>
+<div class="card"><b>MyRunner</b><p>Hola. Ya conozco tu objetivo y tu disponibilidad. Puedo ayudarte a adaptar el entrenamiento de hoy.</p></div>
+<input id="chatInput" placeholder="Ej.: Hoy estoy muy cansado…"><button class="btn" onclick="chat()">Enviar</button>
+<div id="chatReply" class="card" style="display:none"></div>
+</section>
+
+<section id="profile" class="screen">
+<h1>Perfil</h1><div class="card" id="profileCard"></div>
+<button class="btn secondary" onclick="resetApp()">Reiniciar cuestionario</button>
+</section>
+</main>
+<div class="tabs" id="tabs">
+<button onclick="show('home',this)" class="active">🏠<br>Inicio</button>
+<button onclick="show('plan',this)">📅<br>Plan</button>
+<button onclick="show('coach',this)">🤖<br>Coach</button>
+<button onclick="show('profile',this)">👤<br>Perfil</button>
+</div>
+</div>
+
+<script>
+const questions=[
+ {key:'name',title:'¿Cómo te llamas?',type:'text',label:'Nombre',required:true},
+ {key:'age',title:'¿Cuántos años tienes?',type:'number',label:'Edad',required:true,min:12,max:100},
+ {key:'sex',title:'¿Cuál es tu sexo?',type:'single',opts:['Hombre','Mujer','Prefiero no decirlo'],required:true},
+ {key:'height',title:'¿Cuánto mides?',type:'number',label:'Altura (cm)',required:true,min:100,max:230},
+ {key:'weight',title:'¿Cuánto pesas?',type:'number',label:'Peso (kg)',required:true,min:30,max:250},
+ {key:'level',title:'¿Cuál es tu nivel actual?',type:'single',opts:['Nunca he corrido','Estoy empezando','Corro ocasionalmente','Corro regularmente','Corredor avanzado'],required:true},
+ {key:'weekly',title:'¿Cuántos kilómetros corres actualmente por semana?',type:'single',opts:['0 km','1–10 km','10–20 km','20–30 km','30–50 km','Más de 50 km'],required:true},
+ {key:'maxDistance',title:'¿Cuál es la distancia máxima que has corrido recientemente?',type:'single',opts:['Nunca he corrido','1–3 km','5 km','10 km','Media maratón','Maratón o más'],required:true},
+ {key:'best5k',title:'¿Cuál es tu mejor marca reciente de 5 km?',type:'text',label:'Ej.: 27:30 (si no tienes marca, escribe “sin marca”)',required:true},
+ {key:'best10k',title:'¿Cuál es tu mejor marca reciente de 10 km?',type:'text',label:'Ej.: 58:00 (si no tienes marca, escribe “sin marca”)',required:true},
+ {key:'goal',title:'¿Qué quieres conseguir?',type:'multi',opts:['Empezar a correr','5K','10K','Media maratón','Maratón','Mejorar mi marca','Mejorar resistencia','Perder peso','Correr sin parar','Otro'],required:true},
+ {key:'race',title:'¿Tienes una carrera concreta?',type:'single',opts:['No','Sí'],required:true},
+ {key:'raceName',title:'¿Cómo se llama la carrera?',type:'text',label:'Nombre de la carrera (si no aplica, escribe “No aplica”)',required:true},
+ {key:'raceDate',title:'¿Cuál es la fecha de la carrera?',type:'date',label:'Fecha',required:true},
+ {key:'raceDistance',title:'¿Qué distancia tiene?',type:'single',opts:['No aplica','5K','10K','Media maratón','Maratón','Otra'],required:true},
+ {key:'days',title:'¿Cuántos días por semana puedes correr?',type:'single',opts:['1','2','3','4','5','6','7'],required:true},
+ {key:'preferredDays',title:'¿Qué días prefieres entrenar?',type:'days',opts:['L','M','X','J','V','S','D'],required:true},
+ {key:'time',title:'¿Cuánto tiempo tienes normalmente?',type:'single',opts:['30 min','45 min','60 min','90 min','Más de 90 min'],required:true},
+ {key:'extra',title:'¿Haces otros deportes o gimnasio?',type:'multi',opts:['Ninguno','Gimnasio','Bicicleta','Natación','Fútbol','Otro'],required:true},
+ {key:'extraFreq',title:'¿Cuántos días haces esas actividades?',type:'single',opts:['0','1','2','3','4','5+'],required:true},
+ {key:'injury',title:'¿Tienes actualmente alguna lesión o molestia?',type:'single',opts:['No','Sí'],required:true},
+ {key:'injuryDetail',title:'Describe tus molestias o lesiones',type:'text',label:'Si no tienes, escribe “Ninguna”',required:true},
+ {key:'sleep',title:'¿Cómo duermes normalmente?',type:'single',opts:['Muy bien','Bien','Regular','Mal','Muy mal'],required:true},
+ {key:'stress',title:'¿Cuál es tu nivel habitual de estrés?',type:'single',opts:['Bajo','Moderado','Alto','Muy alto'],required:true},
+ {key:'strength',title:'¿Quieres incluir entrenamiento de fuerza?',type:'single',opts:['Sí','No'],required:true},
+ {key:'preferences',title:'¿Qué entrenamientos prefieres?',type:'multi',opts:['Rodajes','Series','Fartlek','Cuestas','Tiradas largas','Entrenamiento variado','Me da igual'],required:true},
+ {key:'notes',title:'¿Hay algo más que MyRunner deba saber?',type:'text',label:'Escribe cualquier información importante. Si no, “Nada”.',required:true}
+];
+let i=0,data={};
+
+function start(){i=0; show('quiz'); render();}
+function render(){
+ const q=questions[i], box=document.getElementById('question');
+ document.getElementById('stepText').textContent=`${i+1}/${questions.length}`;
+ document.getElementById('bar').style.width=((i+1)/questions.length*100)+'%';
+ document.getElementById('back').style.visibility=i===0?'hidden':'visible';
+ document.getElementById('next').textContent=i===questions.length-1?'Crear mi plan':'Continuar';
+ let h=`<h1>${q.title}</h1><p class="subtitle">Paso ${i+1} de ${questions.length}</p>`;
+ if(q.type==='text'||q.type==='number'||q.type==='date') h+=`<label>${q.label||''}</label><input id="answer" type="${q.type}" ${q.min?'min="'+q.min+'"':''} ${q.max?'max="'+q.max+'"':''} value="${data[q.key]||''}">`;
+ else {h+=`<div class="${q.type==='days'?'days':'options'}">`;q.opts.forEach(o=>{let sel=Array.isArray(data[q.key])?data[q.key].includes(o):data[q.key]===o;h+=`<label class="option ${sel?'selected':''}" data-v="${o}" onclick="pick(this,'${q.type}')"><input type="checkbox">${o}</label>`});h+='</div>'}
+ box.innerHTML=h;document.getElementById('error').style.display='none';
+}
+function pick(el,type){if(type==='multi'||type==='days'){el.classList.toggle('selected')}else{el.parentElement.querySelectorAll('.option').forEach(x=>x.classList.remove('selected'));el.classList.add('selected')}}
+function collect(){
+ const q=questions[i]; if(q.type==='text'||q.type==='number'||q.type==='date'){let v=document.getElementById('answer').value.trim(); if(!v)return false;data[q.key]=v}
+ else {let vals=[...document.querySelectorAll('.option.selected')].map(x=>x.dataset.v);if(!vals.length)return false;data[q.key]=(q.type==='multi'||q.type==='days')?vals:vals[0]} return true;
+}
+function next(){if(!collect()){document.getElementById('error').style.display='block';return} if(i<questions.length-1){i++;render()}else finish()}
+function prev(){if(i>0){i--;render()}}
+function finish(){show('generating');let msgs=['Analizando nivel…','Calculando carga inicial…','Organizando tus días disponibles…','Construyendo la primera semana…','Aplicando tus objetivos…','Plan listo ✓'];let n=0;let el=document.getElementById('loadingText');let t=setInterval(()=>{el.textContent=msgs[n++];if(n===msgs.length){clearInterval(t);setTimeout(()=>dashboard(),500)}},500)}
+function dashboard(){localStorage.setItem('myrunnerProfile',JSON.stringify(data));document.getElementById('tabs').style.display='flex';show('home');document.getElementById('profileCard').innerHTML=`<b>${data.name}</b><p>${data.age} años · ${data.height} cm · ${data.weight} kg</p><p><b>Objetivo:</b> ${Array.isArray(data.goal)?data.goal.join(', '):data.goal}</p><p><b>Nivel:</b> ${data.level}</p><p><b>Días:</b> ${data.days} por semana</p>`}
+function show(id,btn){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(btn){document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}if(id!=='quiz')document.getElementById('stepText').textContent=''}
+function chat(){let v=document.getElementById('chatInput').value.trim();if(!v)return;let r=v.toLowerCase().includes('cansad')?'Hoy reduciría la carga. En una versión completa, analizaría tu recuperación y reajustaría automáticamente el resto de la semana.':'Entendido. En la versión completa, el Coach IA utilizará tu historial y el motor de entrenamiento para decidir el siguiente ajuste.';let el=document.getElementById('chatReply');el.style.display='block';el.innerHTML='<b>MyRunner 🤖</b><p>'+r+'</p>'}
+function resetApp(){localStorage.removeItem('myrunnerProfile');location.reload()}
+</script>
+</body>
+</html>
